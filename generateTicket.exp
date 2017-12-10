@@ -1,0 +1,139 @@
+#!/usr/bin/expect -f
+set ticketName [lindex $argv 0]
+set thisScriptDir  [file dirname $argv0]
+set shDir "$thisScriptDir/sh"
+
+
+proc getPassword {} {
+	stty -echo
+	send_user -- "Git password: "
+	expect_user -re "(.*)\n"
+	send_user "\n"
+	stty echo
+	set password $expect_out(1,string)
+	return $password
+}
+
+proc strlen s {
+	set n 0
+	foreach char [split $s ""] {incr n}
+	return $n
+} 
+
+proc debugLog { debugMessage } {
+	set message "EXPECT: $debugMessage"
+	puts $message
+}
+
+proc cleanUpOnFail { shDir } {
+	debugLog "There was an error. Attempting automatic cleanup";
+	spawn bash $shDir/cleanUpOnFailAndInform.sh
+		expect {
+			"cleaned up. back to dev." {
+				debugLog "Clean up successful. Please try generating a ticket again"		
+			}
+			default {
+    			debugLog "Could not clean automatically. CLEAN UP MANUALLY."
+			}
+		}
+        exit
+}
+
+proc checkoutDevAndPull { shDir password } {
+    spawn bash $shDir/gitPullAndInform.sh
+        expect {
+            "Password for" {
+                send "$password\r"; exp_continue
+            }
+			"fatal" {
+				wait
+				exp_close -i $spawn_id
+				debugLog "Wrong password. Try again."
+				exit
+			}
+            "gitPullDone" {
+                wait
+                exp_close -i $spawn_id
+            }
+        }
+}
+
+proc cleanLocalProxyBranch { shDir thisScriptDir } {
+    spawn bash $shDir/cleanProxyBranchAndInform.sh
+        expect {
+            "proxyBranchExp deleted" {
+				debugLog "Ready for use"	
+				 }
+            default { debugLog "could not delete proxy branch" }
+        }
+}
+
+proc start { ticketName shDir thisScriptDir password } {
+
+    checkoutDevAndPull $shDir $password
+
+    spawn bash $shDir/checkoutLockalBranchAndInform.sh
+        expect {
+            "proxyBranchExp created" {
+                wait
+                exp_close -i $spawn_id
+            }
+        }
+
+    spawn bash $shDir/generateCommit.sh $ticketName
+        expect {
+            "ticketGeneratingCommitDone" {
+                wait
+                exp_close -i $spawn_id
+            }
+        }
+
+    spawn bash $shDir/pushAndCreateUpstreamTicket.sh
+        expect {
+            "fatal" {cleanUpOnFail $shDir}
+            "Password for" {send "$password\r"; exp_continue}
+            "Expect upstream ticket created" {
+                    set expBuffer $expect_out(buffer)
+                    wait
+                    exp_close -i $spawn_id 
+                }
+        }
+
+
+    spawn node $thisScriptDir/ticketGenerationHelper/TicketGenerationHelper.js findTicketNumber $ticketName $expBuffer
+        expect {
+			# TODO maybe change the logic for this one as it's a parsing issue and the remote ticket was already created
+            -re "(\\d+)" { set ticketNumber $expect_out(buffer) }
+            default {
+				cleanUpOnFail $shDir
+            }
+        }
+
+     checkoutDevAndPull $shDir $password
+
+	 set trimmedTicketNum  [string trim $ticketNumber]
+     spawn bash $shDir/checkoutLocalTicketAndInform.sh $trimmedTicketNum
+        expect {
+            "expTicketCheckedOut" {
+            }
+            default {
+                debugLog "could not checkout local ticket. Do it manually"
+            }
+        }
+     
+     cleanLocalProxyBranch $shDir $thisScriptDir
+}
+
+set argsLen [llength $argv]
+if {$argsLen != 1} {
+    debugLog "Usage { ticket generation message (ticket name) }"
+	debugLog "Enter the ticket name between quotation marks. Ex. \"This is a valid message\""
+} else {
+	set commitMessageLen [strlen $ticketName]
+	if {$commitMessageLen < 10 || $commitMessageLen > 100} {
+		debugLog "The ticket generation message must be between 10 and 100 symbols long"
+	} else {
+		set password [getPassword]
+    	start $ticketName $shDir $thisScriptDir $password
+	}
+}
