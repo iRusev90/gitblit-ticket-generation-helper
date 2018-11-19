@@ -39,3 +39,6 @@ Currently hardcoded to create tickets for the dev branch.
 		    ```bash
 			EXPECT: The ticket generation message must be between 10 and 100 symbols long
 			```
+
+# Config
+there is a folder called config if the file TmpAutoCommit.flag exists within it then after the ticket generation a commit of the deleted file with automatically be made

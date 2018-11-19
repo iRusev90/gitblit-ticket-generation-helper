@@ -68,11 +68,34 @@ proc cleanLocalProxyBranch { shDir thisScriptDir } {
         }
 }
 
+proc deleteTmpFile { shDir thisScriptDir } {
+	spawn bash $shDir/deleteTmpFileAndInform.sh 
+        expect {
+            "tmpFile" {
+            }
+            default {
+                debugLog "Could not delete temp file. Do it manually"
+            }
+        }
+
+	if {[file exists $thisScriptDir/config/TmpAutoCommit.flag]} {
+		debugLog "hello world"
+	 	spawn bash $shDir/commitTmpFileDeletionAndInform.sh
+	        expect {
+	            "commited" {
+	            }
+	            default {
+	                debugLog "Could not commit tmp file deletion. Do it manually"
+	            }
+	        }
+	}
+}
+
 proc start { ticketName shDir thisScriptDir password } {
 
     checkoutDevAndPull $shDir $password
 
-    spawn bash $shDir/checkoutLockalBranchAndInform.sh
+    spawn bash $shDir/checkoutLocalBranchAndInform.sh
         expect {
             "proxyBranchExp created" {
                 wait
@@ -120,8 +143,10 @@ proc start { ticketName shDir thisScriptDir password } {
                 debugLog "could not checkout local ticket. Do it manually"
             }
         }
-     
-     cleanLocalProxyBranch $shDir $thisScriptDir
+
+	deleteTmpFile $shDir $thisScriptDir
+    cleanLocalProxyBranch $shDir $thisScriptDir
+
 }
 
 set argsLen [llength $argv]
