@@ -42,4 +42,4 @@ Currently hardcoded to create tickets for the dev branch.
 
 # Config
 There is a folder called config.
- * If the file TmpAutoCommit.flag exists within it then after the ticket generation a commit of the deleted file with automatically be made.
+ * If the file TmpAutoCommit.flag exists within it then after the ticket generation a commit of the deleted file will automatically be made.
