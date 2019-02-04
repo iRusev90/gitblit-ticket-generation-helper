@@ -79,7 +79,6 @@ proc deleteTmpFile { shDir thisScriptDir } {
         }
 
 	if {[file exists $thisScriptDir/config/TmpAutoCommit.flag]} {
-		debugLog "hello world"
 	 	spawn bash $shDir/commitTmpFileDeletionAndInform.sh
 	        expect {
 	            "commited" {
@@ -149,16 +148,40 @@ proc start { ticketName shDir thisScriptDir password } {
 
 }
 
+proc areAllChangesCommited {} {
+	spawn git status
+		expect {
+			"nothing to commit, working tree clean" {
+				return 1
+			}
+			default  {
+				return 0
+			}
+		}
+} 
+
 set argsLen [llength $argv]
 if {$argsLen != 1} {
     debugLog "Usage { ticket generation message (ticket name) }"
 	debugLog "Enter the ticket name between quotation marks. Ex. \"This is a valid message\""
 } else {
+
+	if {[file exists $thisScriptDir/config/CheckStatus.flag]} {
+		set isEverythingCommited [areAllChangesCommited] 
+		if {$isEverythingCommited < 1} {
+			debugLog "There are uncommited changes. Please commit them before generating a ticket."
+			exit;
+		}
+	}
+
+
 	set commitMessageLen [strlen $ticketName]
 	if {$commitMessageLen < 10 || $commitMessageLen > 100} {
 		debugLog "The ticket generation message must be between 10 and 100 symbols long"
-	} else {
-		set password [getPassword]
-    	start $ticketName $shDir $thisScriptDir $password
-	}
+		exit;
+	} 
+
+	set password [getPassword]
+   	start $ticketName $shDir $thisScriptDir $password
+	
 }

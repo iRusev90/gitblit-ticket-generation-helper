@@ -43,3 +43,4 @@ Currently hardcoded to create tickets for the dev branch.
 # Config
 There is a folder called config.
  * If the file TmpAutoCommit.flag exists within it then after the ticket generation a commit of the deleted file will automatically be made.
+ * If the file CheckStatus.flag exists within it then the script will check for uncommited changes. If such exist the execution will stop.
