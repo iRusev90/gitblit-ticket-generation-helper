@@ -27,7 +27,7 @@ Currently hardcoded to create tickets for the dev branch.
 
 * then run: 
 	```bash
-	generete-ticket "My first ticket"
+	generate-ticket "My first ticket"
 	```
 	
 	* there will be a lot of output on the console.
