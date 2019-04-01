@@ -121,20 +121,18 @@ proc start { ticketName shDir thisScriptDir password } {
                 }
         }
 
-
-    spawn node $thisScriptDir/ticketGenerationHelper/TicketGenerationHelper.js findTicketNumber $ticketName $expBuffer
-        expect {
-			# TODO maybe change the logic for this one as it's a parsing issue and the remote ticket was already created
-            -re "(\\d+)" { set ticketNumber $expect_out(buffer) }
-            default {
-				cleanUpOnFail $shDir
-            }
-        }
+	set ticketNumber null;
+	
+	 if {[regexp {\-\-\>\s#([\d]*)\:} $expBuffer -> key value]} {
+		   set ticketNumber $key
+	 } else {
+			debugLog "could not parse ticketNumber"
+			cleanUpOnFail $shDir
+	 }
 
      checkoutDevAndPull $shDir $password
 
-	 set trimmedTicketNum  [string trim $ticketNumber]
-     spawn bash $shDir/checkoutLocalTicketAndInform.sh $trimmedTicketNum
+     spawn bash $shDir/checkoutLocalTicketAndInform.sh $ticketNumber
         expect {
             "expTicketCheckedOut" {
             }

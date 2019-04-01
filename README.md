@@ -11,9 +11,6 @@ Currently hardcoded to create tickets for the dev branch.
 		```bash
 		sudo apt-get install expect
 		```
-* nodejs
-    * [node.js](https://nodejs.org/) version 8 works for me
-
 # Usage
 * create an alias for the script in ~/.bashrc for easier usage (optional)
 	```bash
