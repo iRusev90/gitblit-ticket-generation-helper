@@ -1,3 +1,4 @@
 #!/bin/bash
 git checkout dev
-git pull && sleep 5 && echo "EXPECT TRIGGER: gitPullDone"
+git pull
+echo "EXPECT TRIGGER: gitPullDone"

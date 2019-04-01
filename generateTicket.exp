@@ -114,7 +114,7 @@ proc start { ticketName shDir thisScriptDir password } {
         expect {
             "fatal" {cleanUpOnFail $shDir}
             "Password for" {send "$password\r"; exp_continue}
-            "Expect upstream ticket created" {
+            "EXPECT TRIGGER: Expect upstream ticket created" {
                     set expBuffer $expect_out(buffer)
                     wait
                     exp_close -i $spawn_id 
