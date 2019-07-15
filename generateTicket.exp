@@ -43,7 +43,7 @@ proc cleanUpOnFail { shDir branch } {
 proc checkoutDevAndPull { shDir password branch } {
     spawn bash $shDir/gitPullAndInform.sh $branch
         expect {
-            "Password for" {
+            "Password" {
                 send "$password\r"; exp_continue
             }
 			"fatal" {
@@ -118,7 +118,7 @@ proc start { ticketName shDir thisScriptDir password branch } {
     spawn bash $shDir/pushAndCreateUpstreamTicket.sh $branch
         expect {
             "fatal" {cleanUpOnFail $shDir $branch}
-            "Password for" {send "$password\r"; exp_continue}
+            "Password" {send "$password\r"; exp_continue}
             "EXPECT TRIGGER: Expect upstream ticket created" {
                     set expBuffer $expect_out(buffer)
                     wait
