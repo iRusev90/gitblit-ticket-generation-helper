@@ -164,7 +164,7 @@ proc areAllChangesCommited {} {
 } 
 
 set argsLen [llength $argv]
-if {$argsLen > 2} {
+if {$argsLen > 2 || $argsLen < 1} {
     debugLog "Usage { ticket-generator <message> <branch(optional)> }"
 	debugLog "Enter the ticket name between quotation marks. Ex. \"This is a valid message\""
 } else {
