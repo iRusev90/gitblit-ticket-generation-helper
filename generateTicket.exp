@@ -2,6 +2,7 @@
 set ticketName [lindex $argv 0]
 set thisScriptDir  [file dirname $argv0]
 set shDir "$thisScriptDir/sh"
+set branch "dev"
 
 
 proc getPassword {} {
@@ -25,11 +26,11 @@ proc debugLog { debugMessage } {
 	puts $message
 }
 
-proc cleanUpOnFail { shDir } {
+proc cleanUpOnFail { shDir branch } {
 	debugLog "There was an error. Attempting automatic cleanup";
-	spawn bash $shDir/cleanUpOnFailAndInform.sh
+	spawn bash $shDir/cleanUpOnFailAndInform.sh $branch
 		expect {
-			"cleaned up. back to dev." {
+			"cleaned up. back to $branch." {
 				debugLog "Clean up successful. Please try generating a ticket again"		
 			}
 			default {
@@ -39,10 +40,10 @@ proc cleanUpOnFail { shDir } {
         exit
 }
 
-proc checkoutDevAndPull { shDir password } {
-    spawn bash $shDir/gitPullAndInform.sh
+proc checkoutDevAndPull { shDir password branch } {
+    spawn bash $shDir/gitPullAndInform.sh $branch
         expect {
-            "Password for" {
+            "Password" {
                 send "$password\r"; exp_continue
             }
 			"fatal" {
@@ -55,6 +56,10 @@ proc checkoutDevAndPull { shDir password } {
                 wait
                 exp_close -i $spawn_id
             }
+			"error: pathspec" {
+				debugLog "Invalid branch selected: $branch"
+				exit
+			}
         }
 }
 
@@ -90,9 +95,9 @@ proc deleteTmpFile { shDir thisScriptDir } {
 	}
 }
 
-proc start { ticketName shDir thisScriptDir password } {
+proc start { ticketName shDir thisScriptDir password branch } {
 
-    checkoutDevAndPull $shDir $password
+    checkoutDevAndPull $shDir $password $branch
 
     spawn bash $shDir/checkoutLocalBranchAndInform.sh
         expect {
@@ -110,10 +115,10 @@ proc start { ticketName shDir thisScriptDir password } {
             }
         }
 
-    spawn bash $shDir/pushAndCreateUpstreamTicket.sh
+    spawn bash $shDir/pushAndCreateUpstreamTicket.sh $branch
         expect {
-            "fatal" {cleanUpOnFail $shDir}
-            "Password for" {send "$password\r"; exp_continue}
+            "fatal" {cleanUpOnFail $shDir $branch}
+            "Password" {send "$password\r"; exp_continue}
             "EXPECT TRIGGER: Expect upstream ticket created" {
                     set expBuffer $expect_out(buffer)
                     wait
@@ -127,10 +132,10 @@ proc start { ticketName shDir thisScriptDir password } {
 		   set ticketNumber $key
 	 } else {
 			debugLog "could not parse ticketNumber"
-			cleanUpOnFail $shDir
+			cleanUpOnFail $shDir $branch
 	 }
 
-     checkoutDevAndPull $shDir $password
+     checkoutDevAndPull $shDir $password $branch
 
      spawn bash $shDir/checkoutLocalTicketAndInform.sh $ticketNumber
         expect {
@@ -159,10 +164,13 @@ proc areAllChangesCommited {} {
 } 
 
 set argsLen [llength $argv]
-if {$argsLen != 1} {
-    debugLog "Usage { ticket generation message (ticket name) }"
+if {$argsLen > 2 || $argsLen < 1} {
+    debugLog "Usage { ticket-generator <message> <branch(optional)> }"
 	debugLog "Enter the ticket name between quotation marks. Ex. \"This is a valid message\""
 } else {
+	if {$argsLen == 2} {
+		set branch [lindex $argv 1]
+	}
 
 	if {[file exists $thisScriptDir/config/CheckStatus.flag]} {
 		set isEverythingCommited [areAllChangesCommited] 
@@ -180,6 +188,6 @@ if {$argsLen != 1} {
 	} 
 
 	set password [getPassword]
-   	start $ticketName $shDir $thisScriptDir $password
+   	start $ticketName $shDir $thisScriptDir $password $branch
 	
 }

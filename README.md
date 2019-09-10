@@ -1,8 +1,7 @@
 ## gitblit-ticket-generation-helper
 
 An expect script which saves a few steps when creating a gitblit ticket.
-Currently hardcoded to create tickets for the dev branch.
-
+The script creates a ticket for the dev branch by default. This can be changed by adding a second argument to the script.
 
 # Dependencies
 * expect 
@@ -11,6 +10,12 @@ Currently hardcoded to create tickets for the dev branch.
 		```bash
 		sudo apt-get install expect
 		```
+
+# Arguments
+* 1 - ticket name: if there are spaces the message must be surrounded by quotes. Should be between 10 and 100 symbols (gitblit restriction)
+* 2 - branch (OPTIONAL): the branch for which the ticket will be created. Without this argument "dev" will be selected.
+
+
 # Usage
 * create an alias for the script in ~/.bashrc for easier usage (optional)
 	```bash

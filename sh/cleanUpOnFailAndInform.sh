@@ -1,5 +1,5 @@
 #!/bin/bash
 rm -f TempTicketGenerationFile.txt &&
-git checkout dev &&
+git checkout $1 &&
 git branch -D proxyBranchExp &&
-echo "EXPECT TRIGGER: cleaned up. back to dev."
+echo "EXPECT TRIGGER: cleaned up. back to $1."
