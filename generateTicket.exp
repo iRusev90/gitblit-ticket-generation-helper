@@ -4,7 +4,6 @@ set thisScriptDir  [file dirname $argv0]
 set shDir "$thisScriptDir/sh"
 set branch "dev"
 
-
 proc getPassword {} {
 	stty -echo
 	send_user -- "Git password: "
@@ -95,6 +94,37 @@ proc deleteTmpFile { shDir thisScriptDir } {
 	}
 }
 
+proc getTicketCount { location } {
+	set file [open $location r]
+	set count [read $file]
+	close $file
+	return $count
+}
+
+proc writeTicketCount { location value } {
+	set file [open $location w]
+	puts -nonewline $file $value
+	close $file
+}
+
+proc sendDataToRemoteServer { shDir thisScriptDir } {
+	set counterLocation = $thisScriptDir/config/TicketCounter.log
+	if {[file exists $counterLocation]} {
+		set ticketCount [getTicketCount $counterLocation]
+		if {$ticketCount == "15"} {
+			set username [exec git config user.name]
+			spawn bash $shDir/sendStatsToRemoveServer.sh $username $ticketCount
+			exit;
+			close [open $counterLocation w]
+		} else {
+			set ticketCount [expr {$ticketCount + 1}]
+			writeTicketCount $counterLocation $ticketCount
+		}
+	} else {
+		writeTicketCount $counterLocation "1"
+	}
+}
+
 proc start { ticketName shDir thisScriptDir password branch } {
 
     checkoutDevAndPull $shDir $password $branch
@@ -148,7 +178,7 @@ proc start { ticketName shDir thisScriptDir password branch } {
 
 	deleteTmpFile $shDir $thisScriptDir
     cleanLocalProxyBranch $shDir $thisScriptDir
-
+	sendDataToRemoteServer $shDir $thisScriptDir
 }
 
 proc areAllChangesCommited {} {
