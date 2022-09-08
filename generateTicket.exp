@@ -73,28 +73,6 @@ proc cleanLocalProxyBranch { shDir thisScriptDir } {
         }
 }
 
-proc deleteTmpFile { shDir thisScriptDir } {
-	spawn bash $shDir/deleteTmpFileAndInform.sh 
-        expect {
-            "tmpFile" {
-            }
-            default {
-                debugLog "Could not delete temp file. Do it manually"
-            }
-        }
-
-	if {[file exists $thisScriptDir/config/TmpAutoCommit.flag]} {
-	 	spawn bash $shDir/commitTmpFileDeletionAndInform.sh
-	        expect {
-	            "commited" {
-	            }
-	            default {
-	                debugLog "Could not commit tmp file deletion. Do it manually"
-	            }
-	        }
-	}
-}
-
 proc start { ticketName shDir thisScriptDir password branch } {
 
     checkoutDevAndPull $shDir $password $branch
@@ -146,9 +124,7 @@ proc start { ticketName shDir thisScriptDir password branch } {
             }
         }
 
-	deleteTmpFile $shDir $thisScriptDir
     cleanLocalProxyBranch $shDir $thisScriptDir
-
 }
 
 proc areAllChangesCommited {} {
