@@ -4,6 +4,7 @@ set thisScriptDir  [file dirname $argv0]
 set shDir "$thisScriptDir/sh"
 set branch "dev"
 
+set timeout -1
 
 proc getPassword {} {
 	stty -echo
